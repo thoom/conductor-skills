@@ -13,7 +13,12 @@ jobs:
   copilot-setup-steps:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
+
+      - name: Install gh-aw extension
+        uses: github/gh-aw-actions/setup-cli@69af89ae134d818caa7743b23ad966ce03914a27 # v0.68.7
+        with:
+          version: v0.68.7
 
       - name: Install jq if missing
         run: |
