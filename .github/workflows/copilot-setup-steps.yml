@@ -1,0 +1,48 @@
+name: "Copilot Setup Steps"
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq if missing
+        run: |
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Install gh CLI if missing
+        run: |
+          if ! command -v gh &> /dev/null; then
+            (type -p wget >/dev/null || (sudo apt-get update && sudo apt-get install -y wget)) \
+            && sudo mkdir -p -m 755 /etc/apt/keyrings \
+            && out=$(mktemp) && wget -nv -O "$out" https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            && cat "$out" | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+            && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+            && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+            && sudo apt-get update \
+            && sudo apt-get install -y gh
+          fi
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "GitHub Copilot"
+          git config --global user.email "copilot-agent@github.com"
+
+      - name: Verify required tools
+        run: |
+          missing=()
+          for tool in git gh curl jq diff find cat ls mkdir cp; do
+            if ! command -v "$tool" &> /dev/null; then
+              missing+=("$tool")
+            fi
+          done
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required tools: ${missing[*]}"
+            exit 1
+          fi
+          echo "All required tools verified:"
+          for tool in git gh curl jq diff find cat ls mkdir cp; do
+            echo "  $tool -> $(command -v "$tool")"
+          done

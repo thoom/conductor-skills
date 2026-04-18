@@ -1,0 +1,191 @@
+name: Auto-merge sync PRs
+
+on:
+  pull_request:
+    types: [opened, labeled, synchronize]
+  # GITHUB_TOKEN-created PRs don't fire pull_request events for other workflows,
+  # so we also trigger when the sync workflow completes.
+  workflow_run:
+    workflows: ["Sync from upstream conductor"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
+    # For pull_request: run only if labeled automated-sync and title starts with [sync]
+    # For workflow_run: always run (we'll find the PR inside the job)
+    if: >-
+      github.event_name == 'workflow_run' ||
+      (
+        github.event_name == 'pull_request' &&
+        contains(github.event.pull_request.labels.*.name, 'automated-sync') &&
+        startsWith(github.event.pull_request.title, '[sync] ')
+      )
+    steps:
+      - name: Find sync PR
+        id: find-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "pr_number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "Found PR #${{ github.event.pull_request.number }} from pull_request event"
+          else
+            # workflow_run trigger — find the sync PR tied to this specific run
+            run_branch="${{ github.event.workflow_run.head_branch }}"
+            run_sha="${{ github.event.workflow_run.head_sha }}"
+
+            pr_json=$(gh pr list \
+              --repo "${{ github.repository }}" \
+              --label automated-sync \
+              --state open \
+              --json number,title,headRefName,headRefOid \
+              --jq '[.[] | select(.title | startswith("[sync] "))]')
+
+            pr_count=$(echo "$pr_json" | jq 'length')
+
+            if [[ "$pr_count" -eq 0 ]]; then
+              echo "No open sync PR found. Nothing to do."
+              echo "pr_number=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            # 1) Match PR whose head branch equals the workflow_run's head_branch
+            pr_number=$(echo "$pr_json" | jq -r --arg b "$run_branch" \
+              'map(select(.headRefName == $b)) | .[0].number // empty')
+
+            # 2) Match PR whose head SHA equals the workflow_run's head_sha
+            if [[ -z "$pr_number" ]]; then
+              pr_number=$(echo "$pr_json" | jq -r --arg s "$run_sha" \
+                'map(select(.headRefOid == $s)) | .[0].number // empty')
+            fi
+
+            # 3) Fallback: use sole open sync PR; error if ambiguous
+            if [[ -z "$pr_number" ]]; then
+              if [[ "$pr_count" -eq 1 ]]; then
+                pr_number=$(echo "$pr_json" | jq -r '.[0].number')
+                echo "::warning::Could not match PR to workflow_run context; using sole open sync PR #${pr_number}"
+              else
+                echo "::error::${pr_count} open sync PRs found but none match workflow_run (branch=${run_branch}, sha=${run_sha}). Manual intervention required."
+                echo "pr_number=" >> "$GITHUB_OUTPUT"
+                exit 1
+              fi
+            fi
+
+            echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+            echo "Found PR #${pr_number} from workflow_run event"
+          fi
+
+      - name: Approve PR
+        if: steps.find-pr.outputs.pr_number != ''
+        # GITHUB_TOKEN cannot approve its own PRs — allow failure gracefully
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr review "${{ steps.find-pr.outputs.pr_number }}" \
+            --repo "${{ github.repository }}" \
+            --approve \
+            --body "Auto-approved by sync workflow."
+
+      - name: Merge PR (squash)
+        if: steps.find-pr.outputs.pr_number != ''
+        id: merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge "${{ steps.find-pr.outputs.pr_number }}" \
+            --repo "${{ github.repository }}" \
+            --squash \
+            --auto \
+            --delete-branch || {
+            # --auto may not be available; try direct merge
+            gh pr merge "${{ steps.find-pr.outputs.pr_number }}" \
+              --repo "${{ github.repository }}" \
+              --squash \
+              --delete-branch
+          }
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+
+  tag-release:
+    needs: auto-merge
+    runs-on: ubuntu-latest
+    # Only run when a PR was actually merged (not on no-op runs)
+    if: needs.auto-merge.outputs.merged == 'true'
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Resolve upstream version and tag
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fetch the version from upstream .release-please-manifest.json
+          manifest=$(gh api \
+            -H "Accept: application/vnd.github.raw+json" \
+            "/repos/gemini-cli-extensions/conductor/contents/.release-please-manifest.json" \
+            --jq '.') || {
+            echo "::error::Failed to fetch upstream manifest"
+            exit 1
+          }
+
+          version=$(echo "$manifest" | jq -r '.["."]')
+          if [[ -z "$version" || "$version" == "null" ]]; then
+            echo "::error::Could not extract version from upstream manifest"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Upstream version: $version"
+
+          # Resolve exact tag name: conductor-v<version> first, then v<version>
+          candidate="conductor-v${version}"
+          if gh api "/repos/gemini-cli-extensions/conductor/git/ref/tags/${candidate}" &>/dev/null; then
+            echo "tag=${candidate}" >> "$GITHUB_OUTPUT"
+            echo "Resolved upstream tag: $candidate"
+          else
+            candidate="v${version}"
+            if gh api "/repos/gemini-cli-extensions/conductor/git/ref/tags/${candidate}" &>/dev/null; then
+              echo "tag=${candidate}" >> "$GITHUB_OUTPUT"
+              echo "Resolved upstream tag: $candidate"
+            else
+              echo "::error::Neither conductor-v${version} nor v${version} exists upstream"
+              exit 1
+            fi
+          fi
+
+      - name: Check if tag already exists
+        id: check-tag
+        run: |
+          if git rev-parse "refs/tags/${{ steps.resolve.outputs.tag }}" &>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.resolve.outputs.tag }} already exists — skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.resolve.outputs.tag }}" HEAD
+          git push origin "refs/tags/${{ steps.resolve.outputs.tag }}"
+
+      - name: Create GitHub release
+        if: steps.check-tag.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.resolve.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --title "${{ steps.resolve.outputs.tag }}" \
+            --notes "Synced from [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor) ${{ steps.resolve.outputs.tag }}" \
+            --target master
