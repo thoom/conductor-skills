@@ -11,8 +11,14 @@ permissions:
   issues: read
   pull-requests: read
 
+tracker-id: sync-conductor
+engine: copilot
+strict: true
+
 tools:
   github:
+    toolsets: [default]
+  edit:
   bash: ["git", "gh", "curl", "jq", "cat", "ls", "find", "diff", "mkdir", "cp", "rm", "rsync"]
 
 network:
@@ -26,6 +32,10 @@ safe-outputs:
     title-prefix: "[sync] "
     labels: [automated-sync]
     max: 1
+  noop:
+    report-as-issue: false
+
+timeout-minutes: 45
 ---
 
 # Sync Conductor Upstream
@@ -34,7 +44,7 @@ You are an AI agent responsible for keeping this repository's skills in sync wit
 
 ## Step 1: Check for Updates
 
-1. Get the latest version from the upstream conductor repo by reading their `.release-please-manifest.json` file at `https://raw.githubusercontent.com/gemini-cli-extensions/conductor/main/.release-please-manifest.json` — the version is at the `"."` key.
+1. Get the latest version from the upstream conductor repo by reading their `.release-please-manifest.json` file (use the GitHub API) — the version is at the `"."` key.
 2. Resolve the exact upstream tag name for that version by listing tags in the upstream repo. Look for an exact match on `conductor-v<version>` first, then fall back to `v<version>`. If neither exists, fail loudly.
 3. Get the latest version tag in THIS repo by running `git tag --sort=-v:refname | head -1`. If no tags exist, treat the current version as `0.0.0`.
 4. Compare versions. If they match, report "Already up to date" and stop.
