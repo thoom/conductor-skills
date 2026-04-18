@@ -12,7 +12,9 @@ permissions:
   pull-requests: read
 
 tracker-id: sync-conductor
-engine: copilot
+engine: 
+  id: copilot
+  model: gpt-5.4
 strict: true
 
 tools:
