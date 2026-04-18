@@ -120,7 +120,7 @@ jobs:
     if: needs.auto-merge.outputs.merged == 'true'
     steps:
       - name: Checkout master
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: master
           fetch-depth: 0

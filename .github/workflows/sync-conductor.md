@@ -97,4 +97,4 @@ Delete any skill directories in this repo that no longer have a corresponding up
 
 ## Step 6: Create Pull Request
 
-Create a pull request with all changes targeting the `master` branch.
+Push the branch and create a pull request targeting `master` using the `create-pull-request` safe output.
