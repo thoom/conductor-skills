@@ -36,10 +36,10 @@ PLAN MODE PROTOCOL: Parts of this process run within a restricted planning mode.
 2.  **Get Track Description & Enter Restricted Planning Mode:**
     *   **If the user-provided arguments are empty:**
         1. Enter a restricted planning mode where only file creation and modification within the `conductor/` directory is permitted. No destructive or out-of-scope operations.
-        2. Prompt the user (do not repeat the question in the chat):
+        2. Prompt the user:
             - **Header:** "Description"
-            - **Prompt:** "Please provide a brief description of the track (feature, bug fix, chore, etc.) you wish to start."
-            - **Answer type:** Free text (placeholder: "e.g., Implement user authentication")
+            - **Question:** "Please provide a brief description of the track (feature, bug fix, chore, etc.) you wish to start."
+            - **Type:** free text (placeholder: "e.g., Implement user authentication")
             Await the user's response and use it as the track description.
     *   **If the user-provided arguments contain a description:**
         1. Use the content of the user-provided arguments as the track description.
@@ -64,7 +64,7 @@ PLAN MODE PROTOCOL: Parts of this process run within a restricted planning mode.
 
         *   **2. Formulate the Question:** Adhere to the following for each question:
             - **Header:** Very short label (max 16 chars).
-            - **Answer type:** Choice, free text, or yes/no.
+            - **Type:** choice, free text, or yes/no.
             - **Multi-select:** (Required for choice type) Set to multi-select for additive questions or single-select for exclusive choice.
             - **Options:** (Required for choice type) Provide 2-4 options, each with a label and description. Note that an "Other" option should be available for custom input.
             - **Placeholder:** (For free text type) Provide a hint.
@@ -89,16 +89,16 @@ PLAN MODE PROTOCOL: Parts of this process run within a restricted planning mode.
 4.  **User Confirmation:**
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted content directly into the prompt so the user can review it in context.
         - **Header:** "Confirm Spec"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Specification below. Does this accurately capture the requirements?
 
             ---
 
             <Insert Drafted spec.md Content Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The specification looks correct, proceed to planning.
-            - **Revise** — I want to make changes to the requirements.
+            - "Approve" — The specification looks correct, proceed to planning.
+            - "Revise" — I want to make changes to the requirements.
     Await user feedback and revise the `spec.md` content until confirmed.
 
 ### 2.3 Interactive Plan Generation (`plan.md`)
@@ -119,16 +119,16 @@ PLAN MODE PROTOCOL: Parts of this process run within a restricted planning mode.
 3.  **User Confirmation:**
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted content directly into the prompt so the user can review it in context.
         - **Header:** "Confirm Plan"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Implementation Plan below. Does this look correct and cover all the necessary steps?
 
             ---
 
             <Insert Drafted plan.md Content Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The plan looks solid, proceed to implementation.
-            - **Revise** — I want to modify the implementation steps.
+            - "Approve" — The plan looks solid, proceed to implementation.
+            - "Revise" — I want to modify the implementation steps.
     Await user feedback and revise the `plan.md` content until confirmed.
 
 ### 2.4 Create Track Artifacts and Update Main Plan

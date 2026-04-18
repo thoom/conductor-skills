@@ -40,24 +40,24 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
     *   **PATH A: Direct Confirmation**
         1.  Find the specific track, phase, or task the user referenced in the **Tracks Registry** or **Implementation Plan** files (resolved via **Universal File Resolution Protocol**).
-        2.  Immediately prompt the user for confirmation (do not repeat the question in the chat):
+        2.  Immediately prompt the user for confirmation:
             - **Header:** "Confirm"
-            - **Prompt:** "You asked to revert the [Track/Phase/Task]: '[Description]'. Is this correct?"
-            - **Answer type:** Yes/No
-        3.  If "yes", establish this as the `target_intent` and proceed to Phase 2. If "no", immediately prompt the user for clarification (do not repeat the question in the chat):
+            - **Question:** "You asked to revert the [Track/Phase/Task]: '[Description]'. Is this correct?"
+            - **Type:** yes/no
+        3.  If "yes", establish this as the `target_intent` and proceed to Phase 2. If "no", immediately prompt the user for clarification:
             - **Header:** "Clarify"
-            - **Prompt:** "I'm sorry, I misunderstood. Please describe the Track, Phase, or Task you would like to revert."
-            - **Answer type:** Free text
+            - **Question:** "I'm sorry, I misunderstood. Please describe the Track, Phase, or Task you would like to revert."
+            - **Type:** free text
 
     *   **PATH B: Guided Selection Menu**
         1.  **Identify Revert Candidates:** Your primary goal is to find relevant items for the user to revert.
             *   **Scan All Plans:** You MUST read the **Tracks Registry** and every track's **Implementation Plan** (resolved via **Universal File Resolution Protocol** using the track's index file).
             *   **Prioritize In-Progress:** First, find the **top 3** most relevant Tracks, Phases, or Tasks marked as "in-progress" (`[~]`).
             *   **Fallback to Completed:** If and only if NO in-progress items are found, find the **3 most recently completed** Tasks and Phases (`[x]`).
-        2.  **Present a Unified Hierarchical Menu:** Immediately prompt the user with the results (do not list them in the chat first):
+        2.  **Present a Unified Hierarchical Menu:** Immediately prompt the user with the results:
             - **Header:** "Select Item"
-            - **Prompt:** "I found multiple in-progress items (or recently completed items). Please choose which one to revert:"
-            - **Answer type:** Single-select choice
+            - **Question:** "I found multiple in-progress items (or recently completed items). Please choose which one to revert:"
+            - **Type:** choice (single select)
             - **Options:** Provide the identified items as options. Group them by Track in the description if possible. **CRITICAL:** You MUST limit this list to a maximum of 4 items.
                 - **Example Option:** "[Task] Update user model" — Track: track_20251208_user_profile
                 - **Example Option:** "[Phase] Implement Backend" — Track: track_20251208_user_profile
@@ -104,20 +104,20 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     > `  - <sha_plan_commit> ('conductor(plan): Mark task complete')`
     > *   **Action:** I will run `git revert` on these commits in reverse order.
 
-2.  **Final Go/No-Go:** Immediately prompt the user for final confirmation (do not repeat the question in the chat):
+2.  **Final Go/No-Go:** Immediately prompt the user for final confirmation:
     - **Header:** "Confirm Plan"
-    - **Prompt:** "Do you want to proceed with the drafted plan?"
-    - **Answer type:** Single-select choice
+    - **Question:** "Do you want to proceed with the drafted plan?"
+    - **Type:** choice (single select)
     - **Options:**
-        - **Approve** — Proceed with the revert actions.
-        - **Revise** — I want to change the revert plan.
+        - "Approve" — Proceed with the revert actions.
+        - "Revise" — I want to change the revert plan.
 
 3.  **Process User Choice:**
     - If "Approve", proceed to Phase 4.
-    - If "Revise", immediately prompt the user (do not repeat the question in the chat):
+    - If "Revise", immediately prompt the user:
         - **Header:** "Revise"
-        - **Prompt:** "Please describe the changes needed for the revert plan."
-        - **Answer type:** Free text
+        - **Question:** "Please describe the changes needed for the revert plan."
+        - **Type:** free text
 
 ---
 

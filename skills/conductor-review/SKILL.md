@@ -29,7 +29,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 2.  **Handle Failure:**
     -   If ANY of these files are missing, list the missing files, then you MUST halt the operation immediately.
-    -   Announce: "Conductor is not set up. Please run `conductor-setup`."
+    -   Announce: "Conductor is not set up. Please run `conductor-setup` to set up the environment."
     -   Do NOT proceed to Review Protocol.
 
 ---
@@ -44,18 +44,18 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 2.  **Auto-Detect Scope:**
     -   If no input, read the **Tracks Registry**.
     -   Look for a track marked as `[~] In Progress`.
-    -   If one exists, immediately prompt the user for confirmation (do not repeat the question in the chat):
+    -   If one exists, immediately prompt the user for confirmation:
         - **Header:** "Review Track"
-        - **Prompt:** "Do you want to review the in-progress track '<track_name>'?"
-        - **Answer type:** Yes/No
-    -   If no track is in progress, or user says "no", immediately prompt the user (do not repeat the question in the chat):
+        - **Question:** "Do you want to review the in-progress track '<track_name>'?"
+        - **Type:** yes/no
+    -   If no track is in progress, or user says "no", immediately prompt the user:
         - **Header:** "Select Scope"
-        - **Prompt:** "What would you like to review?"
-        - **Answer type:** Free text (placeholder: "Enter track name, or 'current' for uncommitted changes")
-3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed by immediately prompting the user (do not repeat the question in the chat):
+        - **Question:** "What would you like to review?"
+        - **Type:** free text (placeholder: "Enter track name, or 'current' for uncommitted changes")
+3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed by immediately prompting the user:
     - **Header:** "Confirm Scope"
-    - **Prompt:** "I will review: '<identified_scope>'. Is this correct?"
-    - **Answer type:** Yes/No
+    - **Question:** "I will review: '<identified_scope>'. Is this correct?"
+    - **Type:** yes/no
 
 ### 2.2 Retrieve Context
 1.  **Load Project Context:**
@@ -73,10 +73,10 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             -   Run `git diff <revision_range>` to get the full context in one go.
             -   Proceed to "Analyze and Verify".
         -   **Large Changes (> 300 lines):**
-            -   **Confirm:** Immediately prompt the user before proceeding with a large review (do not repeat the question in the chat):
+            -   **Confirm:** Immediately prompt the user before proceeding with a large review:
                 - **Header:** "Large Review"
-                - **Prompt:** "This review involves >300 lines of changes. I will use 'Iterative Review Mode' which may take longer. Proceed?"
-                - **Answer type:** Yes/No
+                - **Question:** "This review involves >300 lines of changes. I will use 'Iterative Review Mode' which may take longer. Proceed?"
+                - **Type:** yes/no
             -   **List Files:** Run `git diff --name-only <revision_range>`.
             -   **Iterate:** For each source file (ignore locks/assets):
                 1.  Run `git diff <revision_range> -- <file_path>`.
@@ -141,14 +141,14 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     -   If no issues found:
         - Announce: "Everything looks great! I don't see any issues."
 2.  **Action:**
-    -   **If issues found:** Immediately prompt the user (do not repeat the question in the chat):
+    -   **If issues found:** Immediately prompt the user:
         - **Header:** "Decision"
-        - **Prompt:** "How would you like to proceed with the findings?"
-        - **Answer type:** Single-select choice
+        - **Question:** "How would you like to proceed with the findings?"
+        - **Type:** choice (single select)
         - **Options:**
-            - **Apply Fixes** — Automatically apply the suggested code changes.
-            - **Manual Fix** — Stop so you can fix issues yourself.
-            - **Complete Track** — Ignore warnings and proceed to cleanup.
+            - "Apply Fixes" — Automatically apply the suggested code changes.
+            - "Manual Fix" — Stop so you can fix issues yourself.
+            - "Complete Track" — Ignore warnings and proceed to cleanup.
         -   **If "Apply Fixes":** Apply the code modifications suggested in the findings using file editing tools. Then proceed to next step.
         -   **If "Manual Fix":** Terminate operation to allow user to edit code.
         -   **If "Complete Track":** Proceed to the next step.
@@ -162,17 +162,17 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     -   If NO changes are detected, proceed to '3.3 Track Cleanup'.
     -   If changes are detected:
         a. **Check for Track Context:**
-            - If you are NOT reviewing a specific track (i.e., you don't have a `plan.md` in context), immediately prompt the user (do not repeat the question in the chat):
+            - If you are NOT reviewing a specific track (i.e., you don't have a `plan.md` in context), immediately prompt the user:
                 - **Header:** "Commit Changes"
-                - **Prompt:** "I've detected uncommitted changes. Should I commit them?"
-                - **Answer type:** Yes/No
+                - **Question:** "I've detected uncommitted changes. Should I commit them?"
+                - **Type:** yes/no
                 - If 'yes', stage all changes and commit with `fix(conductor): Apply review suggestions <brief description of changes>`.
                 - Proceed to '3.3 Track Cleanup'.
         b. **Handle Track-Specific Changes:**
-            i.   **Confirm with User:** Immediately prompt the user (do not repeat the question in the chat):
+            i.   **Confirm with User:** Immediately prompt the user:
                 - **Header:** "Commit & Track"
-                - **Prompt:** "I've detected uncommitted changes from the review process. Should I commit these and update the track's plan?"
-                - **Answer type:** Yes/No
+                - **Question:** "I've detected uncommitted changes from the review process. Should I commit these and update the track's plan?"
+                - **Type:** yes/no
             ii.  **If Yes:**
                  - **Update Plan (Add Review Task):**
                    - Read the track's `plan.md`.
@@ -199,14 +199,14 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 1.  **Context Check:** If you are NOT reviewing a specific track (e.g., just reviewing current changes without a track context), SKIP this entire section.
 
-2.  **Ask for User Choice:** Immediately prompt the user (do not repeat the question in the chat):
+2.  **Ask for User Choice:** Immediately prompt the user:
     - **Header:** "Track Cleanup"
-    - **Prompt:** "Review complete. What would you like to do with track '<track_name>'?"
-    - **Answer type:** Single-select choice
+    - **Question:** "Review complete. What would you like to do with track '<track_name>'?"
+    - **Type:** choice (single select)
     - **Options:**
-        - **Archive** — Move the track's folder to `conductor/archive/` and remove it from the tracks file.
-        - **Delete** — Permanently delete the track's folder and remove it from the tracks file.
-        - **Skip** — Do nothing and leave it in the tracks file.
+        - "Archive" — Move the track's folder to `conductor/archive/` and remove it from the tracks file.
+        - "Delete" — Permanently delete the track's folder and remove it from the tracks file.
+        - "Skip" — Do nothing and leave it in the tracks file.
 
 3.  **Handle User Response:**
     *   **If "Archive":**
@@ -216,10 +216,10 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         iv.  **Commit:** Stage registry and archive. Commit: `chore(conductor): Archive track '<track_name>'`.
         v.   **Announce:** "Track '<track_name>' archived."
     *   **If "Delete":**
-        i.   **Confirm:** Immediately prompt the user for final confirmation (do not repeat the warning in the chat):
+        i.   **Confirm:** Immediately prompt the user for final confirmation:
             - **Header:** "Confirm"
-            - **Prompt:** "WARNING: This is an irreversible deletion. Do you want to proceed?"
-            - **Answer type:** Yes/No
+            - **Question:** "WARNING: This is an irreversible deletion. Do you want to proceed?"
+            - **Type:** yes/no
         ii.  **If yes:** Delete track folder, remove from **Tracks Registry**, commit (`chore(conductor): Delete track '<track_name>'`), announce success.
         iii. **If no:** Cancel.
     *   **If "Skip":** Leave track as is.

@@ -91,8 +91,8 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
                 1.  **Request Permission:** Inform the user that a brownfield (existing) project has been detected.
                 2.  **Ask for Permission:** Prompt the user for permission to perform a read-only scan to analyze the project:
                     - **Header:** "Permission"
-                    - **Prompt:** "A brownfield (existing) project has been detected. May I perform a read-only scan to analyze the project?"
-                    - **Answer type:** Yes/No
+                    - **Question:** "A brownfield (existing) project has been detected. May I perform a read-only scan to analyze the project?"
+                    - **Type:** yes/no
                 3.  **Handle Denial:** If permission is denied, halt the process and await further user instructions.
                 4.  **Confirmation:** Upon confirmation, proceed to the next step.
 
@@ -127,8 +127,8 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 5.  **Inquire about Project Goal (for Greenfield):**
     -   **Prompt the user and wait for their response before proceeding to the next step:**
         - **Header:** "Project Goal"
-        - **Prompt:** "What do you want to build?"
-        - **Answer type:** Free text (placeholder: "e.g., A mobile app for tracking expenses")
+        - **Question:** "What do you want to build?"
+        - **Type:** free text (placeholder: "e.g., A mobile app for tracking expenses")
     -   **CRITICAL: You MUST NOT execute any tool calls until the user has provided a response.**
     -   **Upon receiving the user's response:**
         -   Execute `mkdir -p conductor`.
@@ -140,11 +140,11 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 1.  **Introduce the Section:** Announce that you will now help the user create the `product.md`.
 2.  **Determine Mode:** Prompt the user to choose their preferred workflow:
     - **Header:** "Product"
-    - **Prompt:** "How would you like to define the product details? Whether you prefer a quick start or a deep dive, both paths lead to a high-quality product guide!"
-    - **Answer type:** Single-select choice
+    - **Question:** "How would you like to define the product details? Whether you prefer a quick start or a deep dive, both paths lead to a high-quality product guide!"
+    - **Type:** choice (single select)
     - **Options:**
-        - **Interactive** — I'll guide you through a series of questions to refine your vision.
-        - **Autogenerate** — I'll draft a comprehensive guide based on your initial project goal.
+        - "Interactive" — I'll guide you through a series of questions to refine your vision.
+        - "Autogenerate" — I'll draft a comprehensive guide based on your initial project goal.
 
 4.  **Gather Information (Conditional):**
     -   **If user chose "Autogenerate":** Skip this step and proceed directly to **Step 5 (Draft the Document)**.
@@ -154,7 +154,7 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
         -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context.
         -   **Formulation Guidelines:** Construct each question with:
             - **Header:** Very short label (max 16 chars).
-            - **Answer type:** Choice.
+            - **Type:** "choice".
             - **Multi-select:** Set to multi-select for additive questions, single-select for exclusive choice.
             - **Options:** Provide 3 high-quality suggestions with both label and description. Do NOT include an "Autogenerate" option here.
             - **Note:** An "Other" option for custom input should be available.
@@ -166,16 +166,16 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 5.  **User Confirmation Loop:**
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted content directly into the prompt so the user can review it in context.
         - **Header:** "Review Draft"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Product Guide below. What would you like to do next?
 
             ---
 
             <Insert Drafted product.md Content Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The guide looks good, proceed to the next step.
-            - **Suggest changes** — I want to modify the drafted content.
+            - "Approve" — The guide looks good, proceed to the next step.
+            - "Suggest changes" — I want to modify the drafted content.
 6.  **Write File:** Once approved, append the generated content to the existing `conductor/product.md` file, preserving the `# Initial Concept` section.
 7.  **Continue:** Immediately proceed to the next section.
 
@@ -183,11 +183,11 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 1.  **Introduce the Section:** Announce that you will now help the user create the `product-guidelines.md`.
 2.  **Determine Mode:** Prompt the user to choose their preferred workflow:
     - **Header:** "Product"
-    - **Prompt:** "How would you like to define the product guidelines? You can hand-pick the style or let me generate a standard set."
-    - **Answer type:** Single-select choice
+    - **Question:** "How would you like to define the product guidelines? You can hand-pick the style or let me generate a standard set."
+    - **Type:** choice (single select)
     - **Options:**
-        - **Interactive** — I'll ask you about prose style, branding, and UX principles.
-        - **Autogenerate** — I'll draft standard guidelines based on best practices.
+        - "Interactive" — I'll ask you about prose style, branding, and UX principles.
+        - "Autogenerate" — I'll draft standard guidelines based on best practices.
 
 3.  **Gather Information (Conditional):**
     -   **If user chose "Autogenerate":** Skip this step and proceed directly to **Step 4 (Draft the Document)**.
@@ -197,7 +197,7 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
         -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context.
         -   **Formulation Guidelines:** Construct each question with:
             - **Header:** Very short label (max 16 chars).
-            - **Answer type:** Choice.
+            - **Type:** "choice".
             - **Multi-select:** Set to multi-select for additive questions, single-select for exclusive choice.
             - **Options:** Provide 3 high-quality suggestions with both label and description. Do NOT include an "Autogenerate" option here.
             - **Note:** An "Other" option for custom input should be available.
@@ -209,16 +209,16 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 5.  **User Confirmation Loop:**
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted content directly into the prompt so the user can review it in context.
         - **Header:** "Review Draft"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Product Guidelines below. What would you like to do next?
 
             ---
 
             <Insert Drafted product-guidelines.md Content Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The guidelines look good, proceed to the next step.
-            - **Suggest changes** — I want to modify the drafted content.
+            - "Approve" — The guidelines look good, proceed to the next step.
+            - "Suggest changes" — I want to modify the drafted content.
 6.  **Write File:** Once approved, create the `conductor/product-guidelines.md` file with the generated content.
 7.  **Continue:** Immediately proceed to the next section.
 
@@ -227,18 +227,18 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 2.  **Determine Mode:**
     -   **FOR GREENFIELD PROJECTS:** Prompt the user to choose the workflow:
         - **Header:** "Tech Stack"
-        - **Prompt:** "How would you like to define the technology stack? I can recommend a proven stack for your goal or you can hand-pick each component."
-        - **Answer type:** Single-select choice
+        - **Question:** "How would you like to define the technology stack? I can recommend a proven stack for your goal or you can hand-pick each component."
+        - **Type:** choice (single select)
         - **Options:**
-            - **Interactive** — I'll ask you to select the language, frameworks, and database.
-            - **Autogenerate** — I'll recommend a standard tech stack based on your project goal.
+            - "Interactive" — I'll ask you to select the language, frameworks, and database.
+            - "Autogenerate" — I'll recommend a standard tech stack based on your project goal.
     -   **FOR BROWNFIELD PROJECTS:**
         -   **CRITICAL WARNING:** Your goal is to document the project's *existing* tech stack, not to propose changes.
         -   **State the Inferred Stack:** Based on the code analysis, you MUST state the technology stack that you have inferred in the chat.
         -   **Request Confirmation:** After stating the detected stack, you MUST prompt the user for confirmation:
             - **Header:** "Tech Stack"
-            - **Prompt:** "Is the inferred tech stack (listed above) correct?"
-            - **Answer type:** Yes/No
+            - **Question:** "Is the inferred tech stack (listed above) correct?"
+            - **Type:** yes/no
         -   **Handle Disagreement:** If the user answers 'no' (disputes the suggestion), you MUST immediately prompt the user for free text input to allow them to provide the correct technology stack manually. Once provided, proceed to draft the document using the user's input.
 
 3.  **Gather Information (Greenfield Interactive Only):**
@@ -247,7 +247,7 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
         -   **SUGGESTIONS:** For each question, generate 3-4 high-quality suggested answers.
         -   **Formulation Guidelines:** Construct each question with:
             - **Header:** Very short label (max 16 chars).
-            - **Answer type:** Choice.
+            - **Type:** "choice".
             - **Multi-select:** Set to multi-select to allow hybrid stacks.
             - **Options:** Provide descriptive options with both label and description. Use the label field to explain *why* or *where* a technology fits (e.g., "Typescript - Ideal for Angular UI"). Ensure the options are coherent when combined.
             - **Note:** Do NOT include an "Autogenerate" option here.
@@ -259,16 +259,16 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 5.  **User Confirmation Loop:**
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted content directly into the prompt so the user can review it in context.
         - **Header:** "Review Draft"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Tech Stack below. What would you like to do next?
 
             ---
 
             <Insert Drafted tech-stack.md Content Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The tech stack looks good, proceed to the next step.
-            - **Suggest changes** — I want to modify the drafted content.
+            - "Approve" — The tech stack looks good, proceed to the next step.
+            - "Suggest changes" — I want to modify the drafted content.
 6.  **Write File:** Once approved, create the `conductor/tech-stack.md` file with the generated content.
 7.  **Continue:** Immediately proceed to the next section.
 
@@ -280,33 +280,33 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
         -   **Recommendation:** Based on the Tech Stack defined in the previous step, recommend the most appropriate style guide(s) (e.g., "python.md" for a Python project) and explain why.
         -   **Determine Mode:** Prompt the user:
             - **Header:** "Code Style Guide"
-            - **Prompt:** "How would you like to proceed with the code style guides?"
-            - **Answer type:** Single-select choice
+            - **Question:** "How would you like to proceed with the code style guides?"
+            - **Type:** choice (single select)
             - **Options:**
-                - **Recommended** — Use the guides I suggested above.
-                - **Select from Library** — Let me hand-pick the guides from the library.
+                - "Recommended" — Use the guides I suggested above.
+                - "Select from Library" — Let me hand-pick the guides from the library.
         -   **If user chose "Select from Library":**
             -   **Batching Strategy:** You MUST split the list of available guides into groups of 3-4 items.
-            -   **Action:** Announce "I'll present the available guides in groups. Please select all that apply." Then, immediately prompt the user with the batched questions (do not list the questions in the chat).
+            -   **Action:** Announce "I'll present the available guides in groups. Please select all that apply." Then, immediately prompt the user with the batched questions.
             -   **Single Prompt:** Create one prompt containing one question per group.
             -   **Constraint Handling:** If the final group has only 1 item, you MUST add a second option labeled "None" to satisfy the minimum of 2 options.
             -   **Question Structure:**
                 - **Header:** "Code Style Guide"
-                - **Answer type:** Multi-select choice
-                - **Prompt:** "Which code style guide(s) would you like to include? (Part X/Y):"
+                - **Type:** choice (multi-select)
+                - **Question:** "Which code style guide(s) would you like to include? (Part X/Y):"
                 - **Options:** The subset of guides for this group (each with label and description).
 
     -   **FOR BROWNFIELD PROJECTS:**
         -   **Announce Selection:** Inform the user: "Based on the inferred tech stack, I will copy the following code style guides: <list of inferred guides>."
         -   **Determine Mode:** Prompt the user:
             - **Header:** "Code Style Guide"
-            - **Prompt:** "I've identified these guides for your project. Would you like to proceed or add more?"
-            - **Answer type:** Single-select choice
+            - **Question:** "I've identified these guides for your project. Would you like to proceed or add more?"
+            - **Type:** choice (single select)
             - **Options:**
-                - **Proceed** — Use the suggested guides.
-                - **Add More** — Select additional guides from the library.
+                - "Proceed" — Use the suggested guides.
+                - "Add More" — Select additional guides from the library.
         -   **If user chose "Add More":**
-            -   **Action:** Announce "I'll present the additional guides. Please select all that apply." Then, immediately prompt the user (do not list the questions in the chat).
+            -   **Action:** Announce "I'll present the additional guides. Please select all that apply." Then, immediately prompt the user.
             -   **Method:** Use a single prompt. Dynamically split the available guides into batches of 4 options max. Create one multi-select choice question for each batch.
 
 3.  **Action:** Construct and execute a command to create the directory and copy all selected files from `templates/code_styleguides/` to `conductor/code_styleguides/`. For example: `mkdir -p conductor/code_styleguides && cp templates/code_styleguides/python.md templates/code_styleguides/javascript.md conductor/code_styleguides/`
@@ -317,37 +317,37 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
     -   Copy `templates/workflow.md` to `conductor/workflow.md`.
 2.  **Determine Mode:** Prompt the user to choose their preferred workflow:
     - **Header:** "Workflow"
-    - **Prompt:** "Do you want to use the default workflow or customize it? The default includes >80% test coverage and per-task commits."
-    - **Answer type:** Single-select choice
+    - **Question:** "Do you want to use the default workflow or customize it? The default includes >80% test coverage and per-task commits."
+    - **Type:** choice (single select)
     - **Options:**
-        - **Default** — Use the standard Conductor workflow.
-        - **Customize** — I want to adjust coverage requirements and commit frequency.
+        - "Default" — Use the standard Conductor workflow.
+        - "Customize" — I want to adjust coverage requirements and commit frequency.
 
 3.  **Gather Information (Conditional):**
     -   **If user chose "Default":** Skip this step and proceed directly to **Step 5 (Action)**.
     -   **If user chose "Customize":**
         a. **Initial Batch:** Prompt the user to gather primary customizations (batch these questions together):
             - **Header:** "Coverage"
-            - **Prompt:** "The default required test code coverage is >80%. What is your preferred percentage?"
-            - **Answer type:** Free text (placeholder: "e.g., 90")
+            - **Question:** "The default required test code coverage is >80%. What is your preferred percentage?"
+            - **Type:** free text (placeholder: "e.g., 90")
 
             - **Header:** "Commits"
-            - **Prompt:** "Should I commit changes after each task or after each phase?"
-            - **Answer type:** Single-select choice
+            - **Question:** "Should I commit changes after each task or after each phase?"
+            - **Type:** choice (single select)
             - **Options:**
-                - **Per Task** — Commit after every completed task
-                - **Per Phase** — Commit only after an entire phase is complete
+                - "Per Task" — Commit after every completed task
+                - "Per Phase" — Commit only after an entire phase is complete
 
             - **Header:** "Summaries"
-            - **Prompt:** "Where should I record task summaries?"
-            - **Answer type:** Single-select choice
+            - **Question:** "Where should I record task summaries?"
+            - **Type:** choice (single select)
             - **Options:**
-                - **Git Notes** — Store summaries in Git notes metadata
-                - **Commit Messages** — Include summaries in the commit message body
+                - "Git Notes" — Store summaries in Git notes metadata
+                - "Commit Messages" — Include summaries in the commit message body
         b. **Final Tweak (Second Batch):** Once the first batch is answered, immediately prompt the user to show the result and allow for any additional tweaks:
             - **Header:** "Workflow"
-            - **Answer type:** Free text
-            - **Prompt:**
+            - **Type:** free text
+            - **Question:**
                 Based on your answers, I will configure the workflow with:
                 - Test Coverage: <User Answer 1>%
                 - Commit Frequency: <User Answer 2>
@@ -396,11 +396,11 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
 2.  **Analyze Context:** Read and analyze the content of `conductor/product.md` to understand the project's core concept.
 3.  **Determine Mode:** Prompt the user to choose their preferred workflow:
     - **Header:** "Product Reqs"
-    - **Prompt:** "How would you like to define the product requirements? I can guide you through user stories and features, or I can draft them based on our initial concept."
-    - **Answer type:** Single-select choice
+    - **Question:** "How would you like to define the product requirements? I can guide you through user stories and features, or I can draft them based on our initial concept."
+    - **Type:** choice (single select)
     - **Options:**
-        - **Interactive** — I'll guide you through questions about user stories and functional goals.
-        - **Autogenerate** — I'll draft the requirements based on the Product Guide.
+        - "Interactive" — I'll guide you through questions about user stories and functional goals.
+        - "Autogenerate" — I'll draft the requirements based on the Product Guide.
 
 5.  **Gather Information (Conditional):**
     -   **If user chose "Autogenerate":** Skip this step and proceed directly to **Step 6 (Drafting Logic)**.
@@ -417,16 +417,16 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
     -   **Announce:** Briefly state that the requirements draft is ready. Do NOT repeat the request to "review" or "approve" in the chat.
     -   **Ask for Approval:** Prompt the user for confirmation. You MUST embed the drafted requirements directly into the prompt so the user can review them.
         - **Header:** "Review"
-        - **Prompt:**
+        - **Question:**
             Please review the drafted Product Requirements below. What would you like to do next?
 
             ---
 
             <Insert Drafted Requirements Here>
-        - **Answer type:** Single-select choice
+        - **Type:** choice (single select)
         - **Options:**
-            - **Approve** — The requirements look good, proceed to the next step.
-            - **Suggest changes** — I want to modify the drafted content.
+            - "Approve" — The requirements look good, proceed to the next step.
+            - "Suggest changes" — I want to modify the drafted content.
 8.  **Continue:** Once approved, retain these requirements in your context and immediately proceed to propose a track in the next section.
 
 ### 3.2 Propose a Single Initial Track (Automated + Approval)
@@ -436,18 +436,18 @@ PLAN MODE PROTOCOL: This setup process runs entirely within a restricted plannin
     - **Brownfield:** Focus on maintenance or targeted enhancements (e.g., "Implement user authentication flow").
 3.  **Confirm Proposal:** Prompt the user to validate the proposal:
     - **Header:** "Confirm Track"
-    - **Prompt:** "To get the project started, I suggest the following track: '<Track Title>'. Do you want to proceed with this track?"
-    - **Answer type:** Single-select choice
+    - **Question:** "To get the project started, I suggest the following track: '<Track Title>'. Do you want to proceed with this track?"
+    - **Type:** choice (single select)
     - **Options:**
-        - **Yes** — Proceed with '<Track Title>'.
-        - **Suggest changes** — I want to define a different track.
+        - "Yes" — Proceed with '<Track Title>'.
+        - "Suggest changes" — I want to define a different track.
 4.  **Action:**
     -   **If user chose "Yes":** Use the suggested '<Track Title>' as the track description.
     -   **If user chose "Suggest changes":**
         -   Immediately prompt the user:
             - **Header:** "New Track"
-            - **Prompt:** "Please enter the description for the initial track:"
-            - **Answer type:** Free text (placeholder: "e.g., Setup CI/CD pipeline")
+            - **Question:** "Please enter the description for the initial track:"
+            - **Type:** free text (placeholder: "e.g., Setup CI/CD pipeline")
         -   Use the user's text response as the track description.
     -   Proceed to **Section 3.3** with the determined track description.
 
