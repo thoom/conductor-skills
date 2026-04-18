@@ -13,7 +13,7 @@ permissions:
 
 tools:
   github:
-  bash: ["git", "gh", "curl", "jq", "cat", "ls", "find", "diff", "mkdir", "cp"]
+  bash: ["git", "gh", "curl", "jq", "cat", "ls", "find", "diff", "mkdir", "cp", "rm", "rsync"]
 
 network:
   allowed:
@@ -30,7 +30,7 @@ safe-outputs:
 
 # Sync Conductor Upstream
 
-You are an AI agent responsible for keeping this repository's skills in sync with the upstream [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor) project.
+You are an AI agent responsible for keeping this repository's skills in sync with the upstream [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor) project. You must perform all work yourself using only the tools provided.
 
 ## Step 1: Check for Updates
 
