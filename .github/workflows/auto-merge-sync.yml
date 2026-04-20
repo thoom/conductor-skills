@@ -1,12 +1,13 @@
 name: Auto-merge sync PRs
 
 on:
+  workflow_dispatch:
   pull_request:
-    types: [opened, labeled, synchronize]
+    types: [opened, labeled, synchronize, ready_for_review]
   # GITHUB_TOKEN-created PRs don't fire pull_request events for other workflows,
   # so we also trigger when the sync workflow completes.
   workflow_run:
-    workflows: ["Sync from upstream conductor"]
+    workflows: ["Sync Conductor Skills"]
     types: [completed]
 
 permissions:
@@ -21,7 +22,8 @@ jobs:
     # For pull_request: run only if labeled automated-sync and title starts with [sync]
     # For workflow_run: always run (we'll find the PR inside the job)
     if: >-
-      github.event_name == 'workflow_run' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
       (
         github.event_name == 'pull_request' &&
         contains(github.event.pull_request.labels.*.name, 'automated-sync') &&
@@ -82,6 +84,15 @@ jobs:
             echo "Found PR #${pr_number} from workflow_run event"
           fi
 
+      - name: Mark PR ready (if draft)
+        if: steps.find-pr.outputs.pr_number != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr ready "${{ steps.find-pr.outputs.pr_number }}" \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+
       - name: Approve PR
         if: steps.find-pr.outputs.pr_number != ''
         # GITHUB_TOKEN cannot approve its own PRs — allow failure gracefully
@@ -100,18 +111,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Direct merge (no --auto to avoid false-positive merged=true)
           gh pr merge "${{ steps.find-pr.outputs.pr_number }}" \
             --repo "${{ github.repository }}" \
             --squash \
-            --auto \
-            --delete-branch || {
-            # --auto may not be available; try direct merge
-            gh pr merge "${{ steps.find-pr.outputs.pr_number }}" \
-              --repo "${{ github.repository }}" \
-              --squash \
-              --delete-branch
-          }
-          echo "merged=true" >> "$GITHUB_OUTPUT"
+            --delete-branch
+
+          # Verify actually merged
+          state=$(gh pr view "${{ steps.find-pr.outputs.pr_number }}" \
+            --repo "${{ github.repository }}" \
+            --json state --jq '.state')
+          if [[ "$state" == "MERGED" ]]; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::PR merge command succeeded but PR state is ${state}"
+            exit 1
+          fi
 
   tag-release:
     needs: auto-merge
@@ -167,20 +182,32 @@ jobs:
         id: check-tag
         run: |
           if git rev-parse "refs/tags/${{ steps.resolve.outputs.tag }}" &>/dev/null; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Tag ${{ steps.resolve.outputs.tag }} already exists — skipping."
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.resolve.outputs.tag }} already exists."
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if release already exists
+        id: check-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.resolve.outputs.tag }}" --repo "${{ github.repository }}" &>/dev/null; then
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.resolve.outputs.tag }} already exists."
+          else
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create tag
-        if: steps.check-tag.outputs.exists == 'false'
+        if: steps.check-tag.outputs.tag_exists == 'false'
         run: |
           git tag "${{ steps.resolve.outputs.tag }}" HEAD
           git push origin "refs/tags/${{ steps.resolve.outputs.tag }}"
 
       - name: Create GitHub release
-        if: steps.check-tag.outputs.exists == 'false'
+        if: steps.check-release.outputs.release_exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
