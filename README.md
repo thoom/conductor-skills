@@ -1,8 +1,8 @@
 # conductor-skills
 
-Agent-agnostic port of [Conductor](https://github.com/gemini-cli-extensions/conductor) — a spec-driven development framework for AI coding agents — packaged for the [Vercel Skills CLI](https://github.com/vercel/skills).
+Agent-agnostic port of [Conductor](https://github.com/gemini-cli-extensions/conductor) — a Context-Driven Development framework for AI coding agents — packaged for the [Vercel Skills CLI](https://github.com/vercel/skills).
 
-Conductor gives your AI agent a structured methodology: define specs, generate plans, implement in tracked phases, review against style guides, and maintain project documentation — all through conversational commands.
+Conductor treats context as a managed artifact alongside your code, transforming your repository into a single source of truth that drives every agent interaction with deep, persistent project awareness. The lifecycle is **Context → Spec & Plan → Implement**.
 
 ## Install
 
