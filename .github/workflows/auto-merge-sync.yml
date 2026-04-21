@@ -2,10 +2,6 @@ name: Auto-merge sync PRs
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, labeled, synchronize, ready_for_review]
-  # GITHUB_TOKEN-created PRs don't fire pull_request events for other workflows,
-  # so we also trigger when the sync workflow completes.
   workflow_run:
     workflows: ["Sync Conductor Skills"]
     types: [completed]
@@ -19,70 +15,36 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       merged: ${{ steps.merge.outputs.merged }}
-    # For pull_request: run only if labeled automated-sync and title starts with [sync]
-    # For workflow_run: always run (we'll find the PR inside the job)
+    # For workflow_run: only on success. For workflow_dispatch: always.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (
-        github.event_name == 'pull_request' &&
-        contains(github.event.pull_request.labels.*.name, 'automated-sync') &&
-        startsWith(github.event.pull_request.title, '[sync] ')
-      )
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Find sync PR
         id: find-pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "pr_number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-            echo "Found PR #${{ github.event.pull_request.number }} from pull_request event"
-          else
-            # workflow_run trigger — find the sync PR tied to this specific run
-            run_branch="${{ github.event.workflow_run.head_branch }}"
-            run_sha="${{ github.event.workflow_run.head_sha }}"
+          pr_json=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --label automated-sync \
+            --state open \
+            --json number,title \
+            --jq '[.[] | select(.title | startswith("[sync] "))] | sort_by(.number) | reverse')
 
-            pr_json=$(gh pr list \
-              --repo "${{ github.repository }}" \
-              --label automated-sync \
-              --state open \
-              --json number,title,headRefName,headRefOid \
-              --jq '[.[] | select(.title | startswith("[sync] "))]')
+          pr_count=$(echo "$pr_json" | jq 'length')
 
-            pr_count=$(echo "$pr_json" | jq 'length')
-
-            if [[ "$pr_count" -eq 0 ]]; then
-              echo "No open sync PR found. Nothing to do."
-              echo "pr_number=" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-
-            # 1) Match PR whose head branch equals the workflow_run's head_branch
-            pr_number=$(echo "$pr_json" | jq -r --arg b "$run_branch" \
-              'map(select(.headRefName == $b)) | .[0].number // empty')
-
-            # 2) Match PR whose head SHA equals the workflow_run's head_sha
-            if [[ -z "$pr_number" ]]; then
-              pr_number=$(echo "$pr_json" | jq -r --arg s "$run_sha" \
-                'map(select(.headRefOid == $s)) | .[0].number // empty')
-            fi
-
-            # 3) Fallback: use sole open sync PR; error if ambiguous
-            if [[ -z "$pr_number" ]]; then
-              if [[ "$pr_count" -eq 1 ]]; then
-                pr_number=$(echo "$pr_json" | jq -r '.[0].number')
-                echo "::warning::Could not match PR to workflow_run context; using sole open sync PR #${pr_number}"
-              else
-                echo "::error::${pr_count} open sync PRs found but none match workflow_run (branch=${run_branch}, sha=${run_sha}). Manual intervention required."
-                echo "pr_number=" >> "$GITHUB_OUTPUT"
-                exit 1
-              fi
-            fi
-
-            echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
-            echo "Found PR #${pr_number} from workflow_run event"
+          if [[ "$pr_count" -eq 0 ]]; then
+            echo "No open sync PR found. Nothing to do."
+            echo "pr_number=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          # Pick the newest (highest PR number)
+          pr_number=$(echo "$pr_json" | jq -r '.[0].number')
+          pr_title=$(echo "$pr_json" | jq -r '.[0].title')
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "Found PR #${pr_number}: ${pr_title} (${pr_count} open sync PRs total)"
 
       - name: Mark PR ready (if draft)
         if: steps.find-pr.outputs.pr_number != ''
@@ -127,6 +89,26 @@ jobs:
             echo "::error::PR merge command succeeded but PR state is ${state}"
             exit 1
           fi
+
+      - name: Close stale sync PRs
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          stale=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --label automated-sync \
+            --state open \
+            --json number,title \
+            --jq '[.[] | select(.title | startswith("[sync] "))] | .[].number')
+
+          for pr in $stale; do
+            echo "Closing stale sync PR #${pr}"
+            gh pr close "$pr" \
+              --repo "${{ github.repository }}" \
+              --comment "Closed: superseded by PR #${{ steps.find-pr.outputs.pr_number }} which was merged." \
+              --delete-branch || true
+          done
 
   tag-release:
     needs: auto-merge
