@@ -1,0 +1,71 @@
+name: Check Conductor Version
+
+on:
+  schedule:
+    - cron: "47 12 * * *"
+  workflow_dispatch:
+    inputs:
+      local_version:
+        description: "Override local version (e.g. 0.0.0 to force sync trigger). Leave empty for normal check."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check upstream vs local version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Get upstream version from manifest
+          UPSTREAM=$(curl -sf \
+            "https://raw.githubusercontent.com/gemini-cli-extensions/conductor/main/.release-please-manifest.json" \
+            | jq -r '."."')
+          if [ -z "$UPSTREAM" ] || [ "$UPSTREAM" = "null" ]; then
+            echo "Failed to resolve upstream version. Aborting."
+            exit 1
+          fi
+
+          # Verify the upstream tag actually exists (same logic as sync workflow)
+          UPSTREAM_TAG=$(gh api "repos/gemini-cli-extensions/conductor/git/refs/tags/conductor-v${UPSTREAM}" \
+            --jq '.ref' 2>/dev/null || true)
+          if [ -z "$UPSTREAM_TAG" ]; then
+            UPSTREAM_TAG=$(gh api "repos/gemini-cli-extensions/conductor/git/refs/tags/v${UPSTREAM}" \
+              --jq '.ref' 2>/dev/null || true)
+          fi
+          if [ -z "$UPSTREAM_TAG" ]; then
+            echo "Upstream tag for v${UPSTREAM} not found yet. Aborting."
+            exit 1
+          fi
+
+          # Get latest local version tag, filtered and semver-sorted (mirrors sync workflow logic)
+          # Allow override via workflow_dispatch input for testing
+          if [ -n "${{ inputs.local_version }}" ]; then
+            LOCAL="${{ inputs.local_version }}"
+          else
+            LOCAL_TAG=$(gh api "repos/${{ github.repository }}/tags" --paginate \
+              --jq '.[].name' \
+              | grep -E '^(conductor-v|v)[0-9]+\.[0-9]+\.[0-9]+' \
+              | sed 's/^conductor-v//; s/^v//' \
+              | sort -V -r \
+              | head -1)
+            LOCAL="${LOCAL_TAG:-0.0.0}"
+          fi
+
+          echo "Upstream version: $UPSTREAM"
+          echo "Local version:    $LOCAL"
+
+          if [ "$UPSTREAM" = "$LOCAL" ]; then
+            echo "Already up to date ($UPSTREAM). Skipping sync."
+            exit 0
+          fi
+
+          echo "New version available: $UPSTREAM (current: $LOCAL). Triggering sync..."
+          gh workflow run sync-conductor.lock.yml --repo "${{ github.repository }}"

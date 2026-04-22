@@ -3,7 +3,6 @@ name: Sync Conductor Skills
 description: Detect new conductor releases and convert TOML commands to agent-agnostic SKILL.md format
 
 on:
-  schedule: daily
   workflow_dispatch:
 
 permissions:
@@ -27,7 +26,6 @@ network:
   allowed:
     - defaults
     - github
-    - api.github.com
 
 safe-outputs:
   create-pull-request:
