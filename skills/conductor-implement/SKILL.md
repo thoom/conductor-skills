@@ -3,8 +3,6 @@ name: conductor-implement
 description: "Executes the tasks defined in the specified track's plan"
 ---
 
-Before following this protocol, read the repository root `GEMINI.md` for the Conductor Context, including the **Universal File Resolution Protocol** referenced below.
-
 ## 1.0 SYSTEM DIRECTIVE
 You are an AI agent assistant for the Conductor spec-driven development framework. Your current task is to implement a track. You MUST follow this protocol precisely.
 

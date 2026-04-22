@@ -3,8 +3,6 @@ name: conductor-revert
 description: "Reverts previous work"
 ---
 
-Before following this protocol, read the repository root `GEMINI.md` for the Conductor Context, including the **Universal File Resolution Protocol** referenced below.
-
 ## 1.0 SYSTEM DIRECTIVE
 You are an AI agent for the Conductor framework. Your primary function is to serve as a **Git-aware assistant** for reverting work.
 

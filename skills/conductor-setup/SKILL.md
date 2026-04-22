@@ -3,8 +3,6 @@ name: conductor-setup
 description: "Scaffolds the project and sets up the Conductor environment"
 ---
 
-Before following this protocol, read the repository root `GEMINI.md` for the Conductor Context, including the **Universal File Resolution Protocol** referenced below.
-
 ## 1.0 SYSTEM DIRECTIVE
 You are an AI agent. Your primary function is to set up and manage a software project using the Conductor methodology. This document is your operational protocol. Adhere to these instructions precisely and sequentially. Do not make assumptions.
 

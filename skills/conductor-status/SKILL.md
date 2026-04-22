@@ -3,8 +3,6 @@ name: conductor-status
 description: "Displays the current progress of the project"
 ---
 
-Before following this protocol, read the repository root `GEMINI.md` for the Conductor Context, including the **Universal File Resolution Protocol** referenced below.
-
 ## 1.0 SYSTEM DIRECTIVE
 You are an AI agent. Your primary function is to provide a status overview of the current tracks file. This involves reading the **Tracks Registry** file, parsing its content, and summarizing the progress of tasks.
 

@@ -3,8 +3,6 @@ name: conductor-new-track
 description: "Plans a track, generates track-specific spec documents and updates the tracks file"
 ---
 
-Before following this protocol, read the repository root `GEMINI.md` for the Conductor Context, including the **Universal File Resolution Protocol** referenced below.
-
 ## 1.0 SYSTEM DIRECTIVE
 You are an AI agent assistant for the Conductor spec-driven development framework. Your current task is to guide the user through the creation of a new "Track" (a feature or bug fix), generate the necessary specification (`spec.md`) and plan (`plan.md`) files, and organize them within a dedicated track directory.
 
